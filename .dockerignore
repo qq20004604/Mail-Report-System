@@ -1,0 +1,6 @@
+/env*
+/server_log*
+/coolq*
+/log/*
+/WebPage/
+.idea
