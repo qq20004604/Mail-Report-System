@@ -10,7 +10,6 @@ def set_user_session(request, user):
     request.session['id'] = user.id
     request.session['username'] = user.username
     request.session['last_login_timestamp'] = user.last_login.timestamp()
-    request.session['user_permission'] = user.user_permission
 
 
 # 清除登录状态
