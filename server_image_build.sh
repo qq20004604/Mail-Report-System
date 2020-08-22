@@ -1,9 +1,18 @@
 #!/usr/bin/env bash
-docker container stop report_server
-docker container rm report_server
-docker image rm qq_server:0.0.1
-docker image build -t qq_server:0.0.1 .
+
+imageversion='0.0.1'
+imagename="mail_report_system"
+image="$imagename:$imageversion"
+containername="mail_report_system_server"
+ip="172.19.0.155"
+exportport=49991
+dockernetwork="base-mysql-database-network"
+
+docker container stop "$containername"
+docker container rm "$containername"
+docker image rm "$image"
+docker image build -t "$image" .
 # 输出日志
-#docker container run --name=report_server --network qq_robot --ip 172.20.0.9 -v $(pwd)/server_log:/usr/src/app/log -p 44551:44551 qq_server:0.0.2
+docker container run --name "$containername" --network "$dockernetwork" --ip "$ip" -v $(pwd)/server_log:/usr/src/app/log -p "$exportport:$exportport" "$image"
 # 不输出日志
-docker container run --name=report_server --network qq_robot --ip 172.20.0.9 -v $(pwd)/server_log:/usr/src/app/log -d -p 44551:44551 -it qq_server:0.0.2
+#docker container run --name "$containername" --network "$dockernetwork" --ip "$ip" -v $(pwd)/server_log:/usr/src/app/log -d -p "$exportport:$exportport" -it "$image"
