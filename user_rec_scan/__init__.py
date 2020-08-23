@@ -9,6 +9,8 @@ from user.models import *
 from mail_pusher.utils import send_feeds_mail
 from package.simple_log import log
 
+MAX_CACHE_LENGTH = 24
+
 
 # 自动邮件推送
 class AutoMailPush(object):
@@ -28,7 +30,7 @@ class AutoMailPush(object):
         }
         # 1、当前小时有推送，立即推送
         # 2、当前时间没有推送时，则存储起来；
-        # 3、连续12个小时没有推送信息，则推送一次（之前12个小时所有的信息）；
+        # 3、连续 MAX_CACHE_LENGTH 个小时没有推送信息，则推送一次（之前12个小时所有的信息）；
         # 这个就是那个存储的cache
         self.send_cache = []
 
@@ -78,42 +80,58 @@ class AutoMailPush(object):
 
     # 推送日志邮件给我
     def send_summary(self, hour):
+        # 先获取本轮是否有推送过
+        is_round_have_sended = True if self.statistics['total_user'] == 0 else False
+
         # 组成文字
         text = [
-            '推送时间段：%s：00' % str(hour).zfill(2),
-            '<p>推送用户 %s 人，推送消息 %s 条，推送失败用户为 %s 人</p>' % (
-                self.statistics['total_user'],
-                self.statistics['total_feeds'],
-                self.statistics['fail_user']
-            ),
-            '<p>推送开始时间：%s，推送结束时间：%s，总计耗时 %s 秒。</p>' % (
-                self.statistics['begin_time'].strftime('%Y-%m-%d %H:%M:%S'),
-                self.statistics['end_time'].strftime('%Y-%m-%d %H:%M:%S'),
-                self.statistics['time_cost']),
+            '<b>推送时间段：%s：00</b>' % str(hour).zfill(2)
         ]
+
+        # 有推送则消息更多，无推送则不添加额外消息
+        if is_round_have_sended:
+            text += [
+                '<p>推送用户 %s 人，推送消息 %s 条，推送失败为 %s 条</p>' % (
+                    self.statistics['total_user'],
+                    self.statistics['total_feeds'],
+                    self.statistics['fail_user']
+                ),
+                '<p>推送开始时间：%s，推送结束时间：%s，总计耗时 %s 秒。</p>' % (
+                    self.statistics['begin_time'].strftime('%Y-%m-%d %H:%M:%S'),
+                    self.statistics['end_time'].strftime('%Y-%m-%d %H:%M:%S'),
+                    self.statistics['time_cost'])
+            ]
+
+        # 有失败则追加失败原因到邮件中
         if len(self.statistics['fail_msg']) > 0:
             text.append('<p>失败原因：</p>')
             text += self.statistics['fail_msg']
         elif self.statistics['total_user'] == 0:
-            text.append('本轮不需要推送邮件')
+            text.append('本轮无推送')
         else:
-            text.append('本轮推送全部成功')
+            text.append('<b>本轮推送全部成功</b>')
 
         send_text = []
-        MAX_CACHE_LENGTH = 6
         log('当前时间：%s：00。self.send_cache的长度 %s 条。内容：\n————————————\n%s\n————————————' % (
             str(hour).zfill(2),
             len(self.send_cache),
             self.send_cache
         ))
+
+        # 如果之前有缓存，则添加分割线
+        if len(self.send_cache) > 0:
+            text.append('<p>——————————————————————————————</p>')
+
         # 如果本轮未推送邮件
         if self.statistics['total_user'] == 0:
-            # 且尚未达到连续12轮未推送邮件，则存起来，并返回（即本轮不推送总结邮件）
+            # 将本轮内容追加到前面
+            self.send_cache.insert(0, text)
+
+            # 此时，若缓存尚未达到连续 MAX_CACHE_LENGTH 轮未推送邮件，则存起来，并返回（即本轮不推送总结邮件）
             if len(self.send_cache) < MAX_CACHE_LENGTH:
-                self.send_cache.insert(0, text)
                 return
             else:
-                # 如果达到12轮未推送邮件了，则一起推送
+                # 如果达到 MAX_CACHE_LENGTH 轮未推送邮件了，则一起推送
                 # 拼接内容，一起推送
                 for cache in self.send_cache:
                     send_text += cache
