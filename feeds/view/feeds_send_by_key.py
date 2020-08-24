@@ -31,11 +31,12 @@ def feeds_send_by_key(request):
     upid = uf.cleaned_data['upid']  # UP主的id
     secret_key = uf.cleaned_data['secret_key']  # 密钥
     content = uf.cleaned_data['content']  # 消息体
-    delay = uf.cleaned_data['delay']  # 发送情况：立即/延迟
+    delay = uf.cleaned_data['delay']  # 发送情况：False 立即/True 延迟
+    title = uf.cleaned_data['title']  # 标题（可选）
 
     # 必须有密钥，才能使用密钥推送
     mp_data = MsgPuber.objects.filter(secret_key=secret_key,
-                                      upid=upid)
+                                      id=upid)
 
     if len(mp_data) == 0:
         return get_res_json(code=100, msg='密钥错误，或该密钥对应的UP主不存在')
@@ -64,7 +65,7 @@ def feeds_send_by_key(request):
         return get_res_json(code=200, msg='本条消息已保存成功')
     else:
         # 是立即推送
-        send_result = feed_send_now(feed, mp_data)
+        send_result = feed_send_now(feed, mp_data, title=title)
         # 推送成功
         if send_result:
             return get_res_json(code=200, msg=send_result['msg'])

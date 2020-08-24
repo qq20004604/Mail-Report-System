@@ -6,7 +6,7 @@ from datetime import datetime
 from feeds.models import *
 from mail_pusher.models import *
 from user.models import *
-from mail_pusher.utils import send_feeds_mail
+from mail_pusher.utils import send_feeds_mail, send_started_mail
 from package.simple_log import log
 
 MAX_CACHE_LENGTH = 24
@@ -46,6 +46,8 @@ class AutoMailPush(object):
             self.last_event_hour = datetime.now().hour
 
         self.t.start()
+        # 推送服务启动成功邮件
+        send_started_mail()
 
     # 线程启动后的函数
     def loop(self):

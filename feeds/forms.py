@@ -214,6 +214,14 @@ class FeedSendByKeyForm(Form):
                                   'min_length': '【消息内容】长度需要在1~%s位之间' % FEED_MAX_LENGTH
                               }
                               )
+    # 可选
+    title = forms.CharField(label='title',
+                            max_length=20,
+                            required=False,
+                            error_messages={
+                                'max_length': '【消息标题】长度应当小于 %s 位' % FEED_MAX_LENGTH,
+                            }
+                            )
     delay = forms.NullBooleanField(label='delay',
                                    required=True,
                                    error_messages={

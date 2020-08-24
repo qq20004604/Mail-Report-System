@@ -149,11 +149,11 @@ def is_user_can_pub_feed(user_id):
 
 
 # 立即推送消息
-def feed_send_now(feed, mp_data):
+def feed_send_now(feed, mp_data, title=''):
     # 是立即推送
     feed.set_plan()
     # 调用邮件推送的 api
-    push_result = push_mail(feed_id=feed.id)
+    push_result = push_mail(feed_id=feed.id, title=title)
     # 推送成功
     if push_result['code'] == 200:
         # 设置为已推送
@@ -173,7 +173,7 @@ def feed_send_now(feed, mp_data):
 
 # 推送邮件给订阅者
 # 推送失败则返回 False
-def push_mail(feed_id):
+def push_mail(feed_id, title=''):
     # 流程
     # 1. 根据 feed_id 查 Feeds 表拿到 user_id，uploader_id，pub_time，content。
     # 2. 用 uploader_id 查 MsgPuber 表拿到 name
@@ -225,7 +225,7 @@ def push_mail(feed_id):
     # 6 拼装邮件内容
     content = [
         # up主这里应该给个链接
-        '<a href="http://feeds.lovelovewall.com/lessfeeds.html?tab=user_list&upid=%s">UP主：%s</a>' % (
+        '<a href="http://report.lovelovewall.com/?upid=%s">UP主：%s</a>' % (
             mail_info['uploader_id'],
             mail_info['name']
         ),
@@ -238,7 +238,7 @@ def push_mail(feed_id):
     ]
 
     send_result = send_feeds_mail(receiver_list=suber_mail_list,
-                                  title='UP主：%s' % mail_info['name'],
+                                  title='%s。UP主：%s' % (title, mail_info['name']),
                                   content=content)
 
     is_success = False

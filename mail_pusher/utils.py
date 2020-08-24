@@ -67,3 +67,12 @@ def send_feeds_mail(receiver_list, title, content):
                                         content=content)
     print(send_result)
     return send_result
+
+
+# 推送启动邮件邮件（都调用这个api推送）
+def send_started_mail():
+    send_result = mail_client.send_mail(receiver='20004604@qq.com',
+                                        title='Mail Report System系统已启动',
+                                        content=['Mail Report System系统已启动'])
+    print(send_result)
+    return send_result
